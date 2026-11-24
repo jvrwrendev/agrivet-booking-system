@@ -11,14 +11,15 @@ import {
   Pressable,
   RefreshControl,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ChevronRight,
   LayoutGrid,
   Package,
-  Shapes,
   Search,
+  Shapes,
 } from "lucide-react-native";
 import {
   useNavigation,
@@ -26,24 +27,26 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { listProductsPage } from "@/services/product.service";
-import { listCategories } from "@/services/category.service";
-import type { Product } from "@/types/product";
-import type { Category } from "@/types/category";
-import { Text } from "@/components/ui/text";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ProductImage } from "@/components/shared/product-image";
-import { FavoriteButton } from "@/components/shared/favorite-button";
 import { CategoryFilterButton } from "@/components/shared/category-filter";
-import { LoadingState } from "@/components/shared/loading-state";
-import { ErrorState } from "@/components/shared/error-state";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
+import { FavoriteButton } from "@/components/shared/favorite-button";
+import { LoadingState } from "@/components/shared/loading-state";
 import { ModuleHeader } from "@/components/shared/module-header";
-import { cn } from "@/lib/utils";
+import { ProductImage } from "@/components/shared/product-image";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Text } from "@/components/ui/text";
+import { cn, formatCurrency } from "@/lib/utils";
+import { listCategories } from "@/services/category.service";
+import { listProductsPage } from "@/services/product.service";
+import type { Category } from "@/types/category";
+import type { Product } from "@/types/product";
 
 const PAGE_SIZE = 20;
+const SCREEN_PADDING = 16;
+const GRID_GAP = 12;
 
 type CatalogMode = "products" | "categories";
 
@@ -67,9 +70,32 @@ type CatalogRoute = RouteProp<
   "Catalog"
 >;
 
+function ProductGridSkeleton({ cardWidth }: { cardWidth: number }) {
+  return (
+    <View className="flex-row flex-wrap" style={{ gap: GRID_GAP }}>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <View key={index} style={{ width: cardWidth }}>
+          <Card padded={false} className="overflow-hidden border-border">
+            <Skeleton className="w-full rounded-none" style={{ aspectRatio: 1 }} />
+            <View className="gap-2 p-3">
+              <Skeleton className="h-3 w-16 rounded-sm" />
+              <Skeleton className="h-4 w-full rounded-sm" />
+              <Skeleton className="h-4 w-4/5 rounded-sm" />
+              <Skeleton className="mt-1 h-4 w-24 rounded-sm" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </View>
+          </Card>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function CatalogScreen() {
   const navigation = useNavigation<CatalogNavigation>();
   const route = useRoute<CatalogRoute>();
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.floor((width - SCREEN_PADDING * 2 - GRID_GAP) / 2);
 
   const [mode, setMode] = useState<CatalogMode>("products");
   const [query, setQuery] = useState("");
@@ -249,9 +275,13 @@ export function CatalogScreen() {
 
   const renderProduct = (product: Product) => {
     const outOfStock = product.stockQuantity <= 0;
+    const lowStock = !outOfStock && product.stockQuantity <= 5;
 
     return (
-      <Card padded={false} className="flex-1 overflow-hidden">
+      <Card
+        padded={false}
+        className="overflow-hidden rounded-md border border-border bg-card"
+      >
         <Pressable
           onPress={() =>
             navigation.navigate("CatalogProductDetail", {
@@ -260,25 +290,22 @@ export function CatalogScreen() {
           }
           accessibilityRole="button"
           accessibilityLabel={`View ${product.name}`}
-          className="active:opacity-80"
+          className="active:opacity-90"
         >
-          <View>
+          <View className="relative bg-secondary">
             <ProductImage
               source={product.image}
-              className="h-28 w-full border-b border-border"
+              className="w-full border-b border-border"
+              style={{ aspectRatio: 1 }}
               iconSize={28}
             />
-            <View className="absolute left-2 top-2">
+            <View className="absolute right-2 top-2">
               <FavoriteButton productId={product.id} />
             </View>
             {outOfStock ? (
-              <View className="absolute inset-0 items-center justify-center bg-background/60">
-                <View className="rounded-full bg-foreground/90 px-3 py-1">
-                  <Text
-                    variant="small"
-                    weight="semibold"
-                    className="text-white"
-                  >
+              <View className="absolute inset-0 items-center justify-center bg-white/55">
+                <View className="rounded-sm border border-border bg-background px-2.5 py-1">
+                  <Text className="text-[11px] font-semibold text-foreground">
                     Out of stock
                   </Text>
                 </View>
@@ -288,41 +315,50 @@ export function CatalogScreen() {
 
           <View className="p-3">
             <Text
-              variant="small"
-              tone="muted"
               numberOfLines={1}
-              className="text-[11px] uppercase tracking-wide"
+              className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
             >
-              {product.categoryName}
+              {product.categoryName || "Uncategorized"}
             </Text>
+
             <Text
-              weight="semibold"
               numberOfLines={2}
-              className="mt-1 text-sm leading-5"
+              className="mt-1 min-h-[40px] text-[14px] font-semibold leading-5 text-foreground"
             >
               {product.name}
             </Text>
-            <Text weight="bold" tone="primary" className="mt-1.5 text-sm">
-              ₱{product.sellingPrice.toLocaleString()}
-              <Text variant="small" tone="muted" weight="regular">
-                {" "}
-                / {product.unit}
-              </Text>
-            </Text>
-            <View className="mt-2 flex-row items-center justify-between gap-2">
-              <Badge
-                label={
-                  outOfStock ? "0 left" : `${product.stockQuantity} left`
-                }
-                tone={
+
+            <View className="mt-2 flex-row items-end justify-between gap-2">
+              <View className="flex-1">
+                <Text className="text-[15px] font-bold text-primary">
+                  {formatCurrency(product.sellingPrice)}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  className="mt-0.5 text-[12px] text-muted-foreground"
+                >
+                  per {product.unit || "unit"}
+                </Text>
+              </View>
+              <ChevronRight size={16} color="#9CA3AF" />
+            </View>
+
+            <View className="mt-2.5 border-t border-border pt-2.5">
+              <Text
+                numberOfLines={1}
+                className={cn(
+                  "text-[12px] font-medium",
                   outOfStock
-                    ? "danger"
-                    : product.stockQuantity <= 5
-                      ? "warning"
-                      : "success"
-                }
-              />
-              <ChevronRight size={15} color="#94A3B8" />
+                    ? "text-danger"
+                    : lowStock
+                      ? "text-warning"
+                      : "text-muted-foreground"
+                )}
+              >
+                {outOfStock
+                  ? "Out of stock"
+                  : `${product.stockQuantity} in stock`}
+              </Text>
             </View>
           </View>
         </Pressable>
@@ -372,14 +408,14 @@ export function CatalogScreen() {
       <ModuleHeader
         eyebrow="Browse"
         title="Catalog"
-        subtitle="Browse the catalog and open a product for full details."
+        subtitle="Browse products by category and view details."
         action={
-          <View className="rounded-full border border-primary/20 bg-background px-2.5 py-1">
-            <Text variant="small" weight="semibold" tone="primary">
+          <View className="rounded-md border border-border bg-secondary px-3 py-1.5">
+            <Text className="text-[12px] font-semibold text-foreground">
               {mode === "products"
-                ? `${total} ${total === 1 ? "product" : "products"}`
+                ? `${total} ${total === 1 ? "Product" : "Products"}`
                 : `${categories.length} ${
-                    categories.length === 1 ? "category" : "categories"
+                    categories.length === 1 ? "Category" : "Categories"
                   }`}
             </Text>
           </View>
@@ -387,26 +423,29 @@ export function CatalogScreen() {
         className="mb-4"
       />
 
-      {/* Products / Categories toggle */}
-      <View className="flex-row rounded-xl border border-border bg-secondary p-1">
+      <View className="flex-row rounded-md border border-border bg-secondary p-1">
         <Pressable
           onPress={() => setMode("products")}
           accessibilityRole="tab"
           accessibilityState={{ selected: mode === "products" }}
           accessibilityLabel="Products"
           className={cn(
-            "h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-lg",
-            mode === "products" ? "bg-background shadow-sm" : "opacity-80",
+            "h-10 flex-1 flex-row items-center justify-center gap-2 rounded-sm border",
+            mode === "products"
+              ? "border-border bg-background"
+              : "border-transparent bg-transparent"
           )}
         >
           <LayoutGrid
-            size={15}
-            color={mode === "products" ? "#0F172A" : "#64748B"}
+            size={16}
+            color={mode === "products" ? "#16A34A" : "#64748B"}
+            strokeWidth={1.8}
           />
           <Text
-            variant="small"
-            weight="semibold"
-            tone={mode === "products" ? "default" : "muted"}
+            className={cn(
+              "text-[13px] font-semibold",
+              mode === "products" ? "text-foreground" : "text-muted-foreground"
+            )}
           >
             Products
           </Text>
@@ -417,18 +456,22 @@ export function CatalogScreen() {
           accessibilityState={{ selected: mode === "categories" }}
           accessibilityLabel="Categories"
           className={cn(
-            "h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-lg",
-            mode === "categories" ? "bg-background shadow-sm" : "opacity-80",
+            "h-10 flex-1 flex-row items-center justify-center gap-2 rounded-sm border",
+            mode === "categories"
+              ? "border-border bg-background"
+              : "border-transparent bg-transparent"
           )}
         >
           <Shapes
-            size={15}
-            color={mode === "categories" ? "#0F172A" : "#64748B"}
+            size={16}
+            color={mode === "categories" ? "#16A34A" : "#64748B"}
+            strokeWidth={1.8}
           />
           <Text
-            variant="small"
-            weight="semibold"
-            tone={mode === "categories" ? "default" : "muted"}
+            className={cn(
+              "text-[13px] font-semibold",
+              mode === "categories" ? "text-foreground" : "text-muted-foreground"
+            )}
           >
             Categories
           </Text>
@@ -436,24 +479,54 @@ export function CatalogScreen() {
       </View>
 
       {mode === "products" ? (
-        <View className="mt-3 flex-row gap-2">
-          <Input
-            size="control"
-            containerClassName="flex-1"
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search products"
-            autoCapitalize="none"
-            autoCorrect={false}
-            leftIcon={<Search size={18} color="#64748B" />}
-          />
-          <CategoryFilterButton
-            categories={categoryNames}
-            value={selectedCategoryName}
-            onChange={onCategoryFilterChange}
-          />
+        <View className="mt-4 gap-3">
+          <View className="flex-row items-center gap-2">
+            <Input
+              size="control"
+              containerClassName="flex-1"
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search products"
+              accessibilityLabel="Search products"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              leftIcon={<Search size={18} color="#6B7280" strokeWidth={1.8} />}
+            />
+            <CategoryFilterButton
+              categories={categoryNames}
+              value={selectedCategoryName}
+              onChange={onCategoryFilterChange}
+            />
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-[12px] text-muted-foreground">
+              {hasFilters
+                ? `${total} ${total === 1 ? "result" : "results"}`
+                : "All available products"}
+            </Text>
+            {hasFilters ? (
+              <Pressable
+                onPress={clearFilters}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear filters"
+                className="min-h-[32px] justify-center px-1 active:opacity-70"
+              >
+                <Text className="text-[12px] font-semibold text-primary">
+                  Clear filters
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
-      ) : null}
+      ) : (
+        <View className="mt-4">
+          <Text className="text-[12px] text-muted-foreground">
+            Browse products by category
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -475,7 +548,7 @@ export function CatalogScreen() {
       );
     }
 
-    if (loading) return <LoadingState label="Loading products..." />;
+    if (loading) return <ProductGridSkeleton cardWidth={cardWidth} />;
     if (error) {
       return (
         <ErrorState description={error} onRetry={() => void loadProducts()} />
@@ -507,9 +580,13 @@ export function CatalogScreen() {
         }
         numColumns={mode === "products" ? 2 : 1}
         columnWrapperStyle={
-          mode === "products" ? { gap: 12 } : undefined
+          mode === "products" ? { gap: GRID_GAP } : undefined
         }
-        contentContainerStyle={{ padding: 16, paddingBottom: 28, gap: 12 }}
+        contentContainerStyle={{
+          padding: SCREEN_PADDING,
+          paddingBottom: 28,
+          gap: GRID_GAP,
+        }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -522,13 +599,12 @@ export function CatalogScreen() {
         ListEmptyComponent={emptyComponent}
         ListFooterComponent={
           mode === "products" && products.length > 0 ? (
-            <View className="items-center py-3">
+            <View className="items-center py-4">
               {loadingMore ? (
                 <ActivityIndicator color="#16A34A" />
               ) : page >= totalPages ? (
-                <Text variant="small" tone="muted">
-                  Showing all {total}{" "}
-                  {total === 1 ? "product" : "products"}
+                <Text className="text-[12px] text-muted-foreground">
+                  Showing all {total} {total === 1 ? "product" : "products"}
                 </Text>
               ) : null}
             </View>
@@ -537,9 +613,11 @@ export function CatalogScreen() {
         onEndReached={onEndReached}
         onEndReachedThreshold={0.4}
         renderItem={({ item }) =>
-          item.kind === "product"
-            ? renderProduct(item.product)
-            : renderCategory(item.category)
+          item.kind === "product" ? (
+            <View style={{ width: cardWidth }}>{renderProduct(item.product)}</View>
+          ) : (
+            renderCategory(item.category)
+          )
         }
       />
     </SafeAreaView>

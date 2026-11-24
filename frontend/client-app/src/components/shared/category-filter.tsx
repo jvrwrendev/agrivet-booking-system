@@ -66,14 +66,7 @@ export function CategoryFilterButton({
         >
           <Pressable
             onPress={() => {}}
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-background"
-            style={{
-              shadowColor: "#0F172A",
-              shadowOpacity: 0.12,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 8 },
-              elevation: 8,
-            }}
+            className="w-full max-w-sm overflow-hidden rounded-md border border-border bg-background"
           >
             <View className="flex-row items-center justify-between px-4 py-3.5">
               <Text variant="h3" weight="semibold">
