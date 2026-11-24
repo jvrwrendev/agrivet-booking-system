@@ -179,8 +179,9 @@ export function BookingCreateScreen() {
       });
       cart.clear();
       setConfirmedReference(booking.reference);
-    } catch {
-      setError("Failed to create booking. Please try again.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create booking. Please try again.";
+      setError(message || "Failed to create booking. Please try again.");
     } finally {
       setSubmitting(false);
     }

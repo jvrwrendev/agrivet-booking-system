@@ -107,7 +107,7 @@ model User {
   avatar                     String?
   agentId                    String?                 @unique
   branchId                   String?                 @unique
-  branch                     Branch?                 @relation("BranchAccount", fields: [branchId], references: [id], onDelete: SetNull)
+  branch                     Branch?                 @relation("BranchAccount", fields: [branchId], references: [id], onDelete: Cascade)
   createdAt                  DateTime                @default(now())
   updatedAt                  DateTime                @updatedAt
   sessions                   Session[]
@@ -160,7 +160,7 @@ model Customer {
   address        String
   addressParts   Json
   agentId        String
-  agent          User           @relation("AgentCustomers", fields: [agentId], references: [id], onDelete: Restrict)
+  agent          User           @relation("AgentCustomers", fields: [agentId], references: [id], onDelete: Cascade)
   agentName      String
   status         CustomerStatus @default(ACTIVE)
   totalBookings  Int            @default(0)
@@ -227,9 +227,9 @@ model Product {
   name              String
   sku               String                 @unique
   categoryId        String?
-  category          Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category          Category?              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   supplierId        String?
-  supplierRef       Supplier?              @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierRef       Supplier?              @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   brand             String?
   description       String?
   unit              String
@@ -285,7 +285,7 @@ model InventoryTransaction {
   newStock        Int
   reason          String
   performedById   String?
-  performedBy     User?                    @relation(fields: [performedById], references: [id], onDelete: SetNull)
+  performedBy     User?                    @relation(fields: [performedById], references: [id], onDelete: Cascade)
   performedByName String
   referenceType   String?
   referenceId     String?
@@ -308,7 +308,7 @@ model Booking {
   agentId           String?
   agentName         String
   branchId          String
-  branch            Branch                 @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  branch            Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade)
   branchName        String
   bookingDate       DateTime
   pickupDate        DateTime
@@ -318,10 +318,10 @@ model Booking {
   status            BookingStatus          @default(PENDING)
   notes             String?
   assignedAdminId   String?
-  assignedAdmin     User?                  @relation("BookingAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  assignedAdmin     User?                  @relation("BookingAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: Cascade)
   assignedAdminName String?
   assignedById      String?
-  assignedBy        User?                  @relation("BookingAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+  assignedBy        User?                  @relation("BookingAssignedBy", fields: [assignedById], references: [id], onDelete: Cascade)
   assignedByName    String?
   assignmentDate    DateTime?
   createdAt         DateTime               @default(now())
@@ -342,7 +342,7 @@ model BookingItem {
   bookingId   String
   booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   productName String
   sku         String
   quantity    Int
@@ -373,7 +373,7 @@ model BranchOrder {
   id                String                     @id @default(cuid())
   reference         String                     @unique
   branchId          String
-  branch            Branch                     @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  branch            Branch                     @relation(fields: [branchId], references: [id], onDelete: Cascade)
   branchName        String
   branchManager     String?
   branchContact     String?
@@ -385,10 +385,10 @@ model BranchOrder {
   status            BranchOrderStatus          @default(PENDING)
   notes             String?
   assignedAdminId   String?
-  assignedAdmin     User?                      @relation("BranchOrderAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  assignedAdmin     User?                      @relation("BranchOrderAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: Cascade)
   assignedAdminName String?
   assignedById      String?
-  assignedBy        User?                      @relation("BranchOrderAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+  assignedBy        User?                      @relation("BranchOrderAssignedBy", fields: [assignedById], references: [id], onDelete: Cascade)
   assignedByName    String?
   assignmentDate    DateTime?
   createdAt         DateTime                   @default(now())
@@ -408,7 +408,7 @@ model BranchOrderItem {
   branchOrderId String
   branchOrder   BranchOrder @relation(fields: [branchOrderId], references: [id], onDelete: Cascade)
   productId     String?
-  product       Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product       Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
   productName   String
   sku           String
   quantity      Int
@@ -470,7 +470,7 @@ model AgentLocationHistory {
   agentId       String
   agent         User                 @relation("AgentLocationHistory", fields: [agentId], references: [id], onDelete: Cascade)
   currentId     String?
-  current       AgentLocation?       @relation(fields: [currentId], references: [id], onDelete: SetNull)
+  current       AgentLocation?       @relation(fields: [currentId], references: [id], onDelete: Cascade)
   latitude      Decimal              @db.Decimal(10, 7)
   longitude     Decimal              @db.Decimal(10, 7)
   accuracy      Float?

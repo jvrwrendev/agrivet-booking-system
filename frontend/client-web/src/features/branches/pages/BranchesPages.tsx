@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, Eye, Mail, MoreHorizontal, Pencil, Phone } from "lucide-react";
+import { Building2, Eye, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable, type DataTableColumn } from "@/components/common/DataTable";
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { getStatusVariant, humanize } from "@/lib/status";
 
 import type { Branch } from "@/types/branch";
@@ -29,9 +30,11 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export function BranchesListPage() {
   const { can } = usePermissions();
-  const { branches, loading, error, refresh } = useBranchesStore();
+  const { branches, loading, error, refresh, deleteBranch } = useBranchesStore();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editing, setEditing] = useState<Branch | null>(null);
+  const [deleting, setDeleting] = useState<Branch | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -145,6 +148,15 @@ export function BranchesListPage() {
                 Edit
               </DropdownMenuItem>
             )}
+            {can("branches.manage") && (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => setDeleting(b)}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -185,6 +197,33 @@ export function BranchesListPage() {
       <BranchEditDialog
         branch={editing}
         onOpenChange={(o) => !o && setEditing(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+        title="Delete branch"
+        description={
+          deleting
+            ? `Delete ${deleting.name}? This will permanently delete the branch and its associated inventory records, inventory transactions, bookings, and branch orders. This action cannot be undone.`
+            : undefined
+        }
+        confirmText={deletePending ? "Deleting..." : "Delete"}
+        destructive
+        onConfirm={async () => {
+          if (!deleting) return;
+          setDeletePending(true);
+          try {
+            await deleteBranch(deleting.id);
+            setDeleting(null);
+          } catch {
+            // Store surfaces the error.
+          } finally {
+            setDeletePending(false);
+          }
+        }}
       />
     </div>
   );

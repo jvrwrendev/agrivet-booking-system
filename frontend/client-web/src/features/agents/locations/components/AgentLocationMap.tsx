@@ -1,10 +1,11 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { Crosshair } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { MapLegend } from "./MapLegend";
+import { MapStyleToggle, getMapTileConfig, type MapStyleId } from "./map-styles";
 import type { MapMarker } from "./MapCanvas";
 
 export type { MapMarker } from "./MapCanvas";
@@ -40,6 +41,9 @@ export function AgentLocationMap({
   recenterLabel = "Recenter",
   showLegend = true,
 }: AgentLocationMapProps) {
+  const [mapStyle, setMapStyle] = useState<MapStyleId>("street");
+  const tile = useMemo(() => getMapTileConfig(mapStyle), [mapStyle]);
+
   return (
     <div className={cn("relative overflow-hidden rounded-lg border bg-muted/40", className)}>
       <Suspense
@@ -57,27 +61,32 @@ export function AgentLocationMap({
           initialZoom={initialZoom}
           selectedZoom={selectedZoom}
           fitSignal={fitSignal}
+          tileUrl={tile.url}
+          tileAttribution={tile.attribution}
+          tileMaxZoom={tile.maxZoom}
+          tileMaxNativeZoom={tile.maxNativeZoom}
           className="h-full w-full"
         />
       </Suspense>
 
       {showLegend && <MapLegend />}
 
-      {showRecenter ? (
-        <div className="absolute right-3 top-3 z-[500]">
+      <div className="absolute right-3 top-3 z-[500] flex items-center gap-2">
+        <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
+        {showRecenter ? (
           <Button
             type="button"
             size="sm"
             variant="outline"
             onClick={onRecenterClick}
-            className="h-8 gap-1.5 bg-background px-2.5 text-xs"
+            className="h-8 gap-1.5 bg-background px-2.5 text-xs shadow-sm"
           >
             <Crosshair className="h-3.5 w-3.5" aria-hidden />
             <span className="hidden sm:inline">{recenterLabel}</span>
             <span className="sr-only sm:hidden">{recenterLabel}</span>
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

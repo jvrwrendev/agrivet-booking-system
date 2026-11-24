@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Edit, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Edit, Mail, MapPin, Phone, Trash2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { NotFound } from "@/components/common/NotFound";
 import { Spinner } from "@/components/ui/spinner";
 import { DescriptionList } from "@/components/common/DescriptionList";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 import { useBranchesStore } from "../hooks/useBranchesStore";
 import { BranchEditDialog } from "../components/BranchEditDialog";
@@ -19,10 +20,12 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export function BranchDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { getBranch, loading } = useBranchesStore();
+  const { getBranch, loading, deleteBranch } = useBranchesStore();
   const { can } = usePermissions();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
 
   const branch = id ? getBranch(id) : undefined;
 
@@ -60,10 +63,16 @@ export function BranchDetailPage() {
         ]}
         actions={
           can("branches.manage") && (
-            <Button onClick={() => setEditOpen(true)}>
-              <Edit className="h-4 w-4" aria-hidden />
-              Edit
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
+                <Edit className="h-4 w-4" aria-hidden />
+                Edit
+              </Button>
+              <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4" aria-hidden />
+                Delete
+              </Button>
+            </div>
           )
         }
       />
@@ -124,6 +133,27 @@ export function BranchDetailPage() {
       <BranchEditDialog
         branch={editOpen ? branch : null}
         onOpenChange={setEditOpen}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete branch"
+        description={`Delete ${branch.name}? This will permanently delete the branch and its associated inventory records, inventory transactions, bookings, and branch orders. This action cannot be undone.`}
+        confirmText={deletePending ? "Deleting..." : "Delete"}
+        destructive
+        onConfirm={async () => {
+          setDeletePending(true);
+          try {
+            await deleteBranch(branch.id);
+            setDeleteOpen(false);
+            navigate("/branches");
+          } catch {
+            // Store surfaces the error.
+          } finally {
+            setDeletePending(false);
+          }
+        }}
       />
     </div>
   );

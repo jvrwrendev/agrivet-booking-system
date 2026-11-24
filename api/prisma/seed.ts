@@ -355,9 +355,10 @@ async function seedProducts(
 }
 
 async function main() {
+  // Branches must exist before users reference them via branchId.
+  await seedBranches();
   const admin = await seedUsers();
   const categoryIdMap = await seedCategories();
-  await seedBranches();
   const supplierIdMap = await seedSuppliers();
   await seedProducts(admin, categoryIdMap, supplierIdMap);
 }

@@ -13,6 +13,7 @@ import { ApiError } from "@/lib/api-client";
 import type { Branch, BranchFormValues } from "@/types/branch";
 import {
   createBranch as createBranchRequest,
+  deleteBranch as deleteBranchRequest,
   listAllBranches,
   setBranchStatus,
   updateBranch as updateBranchRequest,
@@ -26,6 +27,7 @@ interface BranchesContextValue {
   addBranch: (data: BranchFormValues) => Promise<Branch>;
   updateBranch: (id: string, data: BranchFormValues) => Promise<Branch>;
   toggleStatus: (id: string, status: Branch["status"]) => Promise<void>;
+  deleteBranch: (id: string) => Promise<void>;
   getBranch: (id: string) => Branch | undefined;
 }
 
@@ -118,6 +120,22 @@ export function BranchesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const deleteBranch = useCallback(async (id: string) => {
+    const target = branches.find((b) => b.id === id);
+    try {
+      await deleteBranchRequest(id);
+      setBranches((previous) => previous.filter((branch) => branch.id !== id));
+      toast.success("Branch deleted", {
+        description: target ? `${target.name} and its associated records were removed.` : "Branch was removed.",
+      });
+    } catch (err) {
+      toast.error("Could not delete branch", {
+        description: messageFor(err, "Please try again."),
+      });
+      throw err;
+    }
+  }, [branches]);
+
   const value = useMemo<BranchesContextValue>(
     () => ({
       branches,
@@ -127,9 +145,10 @@ export function BranchesProvider({ children }: { children: ReactNode }) {
       addBranch,
       updateBranch,
       toggleStatus,
+      deleteBranch,
       getBranch: (id) => branches.find((branch) => branch.id === id),
     }),
-    [branches, loading, error, refresh, addBranch, updateBranch, toggleStatus],
+    [branches, loading, error, refresh, addBranch, updateBranch, toggleStatus, deleteBranch],
   );
 
   return (

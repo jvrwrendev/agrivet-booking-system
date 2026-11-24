@@ -180,6 +180,23 @@ export async function getBranchById(id: string): Promise<BranchView> {
   return toBranchView(await mustGetBranch(id));
 }
 
+export async function getBranchForAccount(userId: string): Promise<BranchView | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { branchId: true, role: true },
+  });
+
+  if (!user) throw Errors.unauthorized("Account no longer exists");
+  if (user.role !== "BRANCH" || !user.branchId) return null;
+
+  const branch = await prisma.branch.findUnique({
+    where: { id: user.branchId },
+    select: BRANCH_SELECT,
+  });
+
+  return branch ? toBranchView(branch) : null;
+}
+
 export async function createBranch(input: CreateBranchDto): Promise<BranchView> {
   const branchId = `BR-${randomUUID()}`;
   const hasAddressValue = hasAddress(input.addressParts);
@@ -340,4 +357,27 @@ export async function updateBranchStatus(
   });
 
   return getBranchById(id);
+}
+
+export async function deleteBranch(id: string): Promise<void> {
+  const existing = await mustGetBranch(id);
+
+  await prisma.$transaction(async (tx) => {
+    if (existing.account) {
+      // Preserve the account record for audit/history, but unlink it from the
+      // branch being deleted and revoke active sessions.
+      await tx.session.deleteMany({ where: { userId: existing.account.id } });
+      await tx.user.update({
+        where: { id: existing.account.id },
+        data: {
+          branchId: null,
+          status: "INACTIVE",
+        },
+      });
+    }
+
+    // DB FKs are ON DELETE CASCADE for branch-dependent records (inventory,
+    // transactions, bookings, branch orders, and their child rows).
+    await tx.branch.delete({ where: { id } });
+  });
 }

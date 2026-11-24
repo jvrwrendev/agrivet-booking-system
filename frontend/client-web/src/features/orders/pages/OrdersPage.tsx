@@ -21,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMyOrders } from "../hooks/useMyOrders";
 import { useBookingsStore } from "@/features/bookings/hooks/useBookingsStore";
 import { useBranchOrdersStore } from "@/features/branch-orders/hooks/useBranchOrdersStore";
-import { useBranchesStore } from "@/features/branches/hooks/useBranchesStore";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -78,7 +77,6 @@ export function OrdersPage() {
     refresh: refreshBranchOrders,
   } = useBranchOrdersStore();
   const { myAgentOrders, myBranchOrders } = useMyOrders();
-  const { branches } = useBranchesStore();
   const [agentStatus, setAgentStatus] = useState("all");
   const [branchStatus, setBranchStatus] = useState("all");
   const [agentDate, setAgentDate] = useState<DatePreset>("all");
@@ -137,16 +135,6 @@ export function OrdersPage() {
       cell: (b) => <span className="text-sm">{b.agentName}</span>,
       sortable: true,
       sortKey: "agentName",
-      hideOnMobile: true,
-    },
-    {
-      id: "branchManager",
-      header: "Branch Manager",
-      cell: (b) => (
-        <span className="text-sm">
-          {branches.find((branch) => branch.id === b.branchId)?.manager ?? "—"}
-        </span>
-      ),
       hideOnMobile: true,
     },
     {

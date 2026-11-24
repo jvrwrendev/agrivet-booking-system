@@ -1,4 +1,4 @@
-import logoUrl from "@/assets/main-logo.jpg";
+import logoUrl from "@/assets/logo/main-logo.webp";
 import { cn } from "@/lib/utils";
 
 interface BrandLogoProps {
@@ -18,7 +18,7 @@ export function BrandLogo({
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-md",
         className
       )}
     >

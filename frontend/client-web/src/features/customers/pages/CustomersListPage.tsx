@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Eye, MapPin, MoreHorizontal, Pencil, Phone, Plus } from "lucide-react";
+import { Eye, MapPin, MoreHorizontal, Pencil, Phone } from "lucide-react";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable, type DataTableColumn } from "@/components/common/DataTable";
@@ -25,7 +25,6 @@ import {
 
 import type { Customer } from "@/types/customer";
 import { useCustomersStore } from "../hooks/useCustomersStore";
-import { CustomerAddDialog } from "../components/CustomerAddDialog";
 import { CustomerEditDialog } from "../components/CustomerEditDialog";
 import { formatCurrency, formatDate, initials } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,7 +33,6 @@ export function CustomersListPage() {
   const { can } = usePermissions();
   const { customers, toggleStatus, loading, error, refresh } = useCustomersStore();
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [addOpen, setAddOpen] = useState(false);
   const [statusTarget, setStatusTarget] = useState<Customer | null>(null);
   const [editing, setEditing] = useState<Customer | null>(null);
 
@@ -188,14 +186,7 @@ export function CustomersListPage() {
         title="Customers"
         description="Manage your customer records and their purchase history."
         breadcrumbs={[{ label: "People" }, { label: "Customers" }]}
-        actions={
-          can("customers.manage") && (
-            <Button onClick={() => setAddOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Add Customer
-            </Button>
-          )
-        }
+
       />
 
       <DataTable<Customer>
@@ -220,8 +211,6 @@ export function CustomersListPage() {
           </Select>
         }
       />
-
-      <CustomerAddDialog open={addOpen} onOpenChange={setAddOpen} />
 
       <CustomerEditDialog
         customer={editing}

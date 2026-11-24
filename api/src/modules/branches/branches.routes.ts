@@ -7,7 +7,9 @@ import {
 } from "../../middleware/validation.middleware.js";
 import {
   createBranchController,
+  deleteBranchController,
   getBranchController,
+  getMyBranchController,
   listBranchesController,
   updateBranchController,
   updateBranchStatusController,
@@ -22,24 +24,33 @@ import {
 
 export const branchesRouter = Router();
 
-branchesRouter.use(requireRole("ADMIN"));
+// Branch account self-service: fetch own branch details for mobile flows.
+branchesRouter.get("/me", requireRole("BRANCH"), getMyBranchController);
 
 branchesRouter.get(
   "/",
+  requireRole("ADMIN"),
   validateQuery(listBranchesQueryDto),
   listBranchesController,
 );
 
 branchesRouter.get(
   "/:id",
+  requireRole("ADMIN"),
   validateParams(branchParamsDto),
   getBranchController,
 );
 
-branchesRouter.post("/", validateBody(createBranchDto), createBranchController);
+branchesRouter.post(
+  "/",
+  requireRole("ADMIN"),
+  validateBody(createBranchDto),
+  createBranchController,
+);
 
 branchesRouter.patch(
   "/:id",
+  requireRole("ADMIN"),
   validateParams(branchParamsDto),
   validateBody(updateBranchDto),
   updateBranchController,
@@ -47,7 +58,15 @@ branchesRouter.patch(
 
 branchesRouter.patch(
   "/:id/status",
+  requireRole("ADMIN"),
   validateParams(branchParamsDto),
   validateBody(updateBranchStatusDto),
   updateBranchStatusController,
+);
+
+branchesRouter.delete(
+  "/:id",
+  requireRole("ADMIN"),
+  validateParams(branchParamsDto),
+  deleteBranchController,
 );

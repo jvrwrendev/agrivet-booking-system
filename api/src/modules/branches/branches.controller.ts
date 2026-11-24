@@ -59,3 +59,17 @@ export const updateBranchStatusController = asyncHandler(
     return sendSuccess(res, { branch });
   },
 );
+
+export const deleteBranchController = asyncHandler(
+  async (req: AuthenticatedRequest<{ id: string }>, res) => {
+    await branchesService.deleteBranch(req.params.id);
+    return sendSuccess(res, { deleted: true });
+  },
+);
+
+export const getMyBranchController = asyncHandler(
+  async (req: AuthenticatedRequest, res) => {
+    const branch = await branchesService.getBranchForAccount(req.user.id);
+    return sendSuccess(res, { branch });
+  },
+);

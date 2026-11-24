@@ -119,3 +119,9 @@ export async function setBranchStatus(
   );
   return toBranch(branch);
 }
+
+export async function deleteBranch(id: string): Promise<void> {
+  await request<{ deleted: boolean }>(`/branches/${id}`, {
+    method: "DELETE",
+  });
+}
