@@ -118,6 +118,8 @@ model User {
   assignedBranchOrders       BranchOrder[]           @relation("BranchOrderAssignedAdmin")
   assignedBranchOrderActions BranchOrder[]           @relation("BranchOrderAssignedBy")
   customers                  Customer[]              @relation("AgentCustomers")
+  agentLocation              AgentLocation?          @relation("AgentCurrentLocation")
+  agentLocationHistory       AgentLocationHistory[]  @relation("AgentLocationHistory")
 
   @@map("users")
 }
@@ -431,4 +433,55 @@ model BranchOrderStatusHistory {
 
   @@index([branchOrderId, createdAt])
   @@map("branch_order_status_history")
+}
+
+enum AgentTrackingStatus {
+  ONLINE
+  INACTIVE
+  OFFLINE
+  GPS_UNAVAILABLE
+}
+
+model AgentLocation {
+  id             String              @id @default(cuid())
+  agentId        String              @unique
+  agent          User                @relation("AgentCurrentLocation", fields: [agentId], references: [id], onDelete: Cascade)
+  latitude       Decimal?            @db.Decimal(10, 7)
+  longitude      Decimal?            @db.Decimal(10, 7)
+  accuracy       Float?
+  speed          Float?
+  heading        Float?
+  locationLabel  String?
+  trackingStatus AgentTrackingStatus @default(OFFLINE)
+  isTracking     Boolean             @default(false)
+  gpsAvailable   Boolean             @default(true)
+  lastSeenAt     DateTime?
+  recordedAt     DateTime            @default(now())
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  history        AgentLocationHistory[]
+
+  @@index([trackingStatus, lastSeenAt])
+  @@map("agent_locations")
+}
+
+model AgentLocationHistory {
+  id            String               @id @default(cuid())
+  agentId       String
+  agent         User                 @relation("AgentLocationHistory", fields: [agentId], references: [id], onDelete: Cascade)
+  currentId     String?
+  current       AgentLocation?       @relation(fields: [currentId], references: [id], onDelete: SetNull)
+  latitude      Decimal              @db.Decimal(10, 7)
+  longitude     Decimal              @db.Decimal(10, 7)
+  accuracy      Float?
+  speed         Float?
+  heading       Float?
+  locationLabel String?
+  status        AgentTrackingStatus  @default(ONLINE)
+  recordedAt    DateTime             @default(now())
+  createdAt     DateTime             @default(now())
+
+  @@index([agentId, recordedAt])
+  @@index([recordedAt])
+  @@map("agent_location_history")
 }

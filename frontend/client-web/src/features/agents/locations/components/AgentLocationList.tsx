@@ -37,7 +37,7 @@ export function AgentLocationList({
     <ul className={cn("divide-y", className)}>
       {locations.map((location) => {
         const isSelected = location.agentId === selectedId;
-        const hasFix = location.latitude !== null;
+        const hasFix = location.latitude !== null && location.longitude !== null;
         const meta = LOCATION_STATUS_META[location.status];
 
         return (
@@ -89,11 +89,22 @@ export function AgentLocationList({
                     <MapPinOff className="h-3 w-3 shrink-0" aria-hidden />
                   )}
                   <span className="truncate">
-                    {hasFix ? location.locationLabel : "No position reported"}
+                    {hasFix
+                      ? location.locationLabel || `${location.latitude?.toFixed(5)}, ${location.longitude?.toFixed(5)}`
+                      : "No position reported"}
                   </span>
                 </div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  Updated {relativeTime(location.lastUpdated)}
+                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>
+                    {location.lastUpdated
+                      ? `Updated ${relativeTime(location.lastUpdated)}`
+                      : "No updates yet"}
+                  </span>
+                  {hasFix ? (
+                    <span className={cn("font-medium", location.isLive ? "text-success" : "text-muted-foreground")}>
+                      {location.isLive ? "Live" : "Last known"}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </button>

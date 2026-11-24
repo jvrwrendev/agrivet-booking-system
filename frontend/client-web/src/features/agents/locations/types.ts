@@ -1,43 +1,53 @@
 /**
  * Agent location tracking domain types.
- *
- * NOTE: `LocationStatus` is intentionally independent of `Agent.status`
- * (`active | inactive | suspended`). An account can be active while the device
- * is offline, so the two concerns must never be conflated.
  */
 
-export type LocationStatus = "tracking" | "offline" | "location_unavailable";
+export type LocationStatus =
+  | "online"
+  | "inactive"
+  | "offline"
+  | "gps_unavailable";
 
 export interface AgentLocation {
   agentId: string;
   agentName: string;
-  /** Null when the device has not reported a fix (`location_unavailable`). */
+  avatar?: string | null;
   latitude: number | null;
-  /** Null when the device has not reported a fix (`location_unavailable`). */
   longitude: number | null;
+  accuracy?: number | null;
+  speed?: number | null;
+  heading?: number | null;
+  locationLabel?: string | null;
   status: LocationStatus;
+  isLive: boolean;
+  isTracking?: boolean;
+  gpsAvailable?: boolean;
+  lastSeenAt?: string | null;
   /** ISO timestamp of the last known position report. */
-  lastUpdated: string;
-  /** Human-readable place the agent is believed to be at. */
-  locationLabel: string;
+  lastUpdated: string | null;
+  recordedAt?: string | null;
+}
+
+export interface AgentLocationHistoryPoint {
+  id: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  speed: number | null;
+  heading: number | null;
+  locationLabel: string | null;
+  status: LocationStatus;
+  recordedAt: string;
 }
 
 export type LocationStatusFilter = LocationStatus | "all";
 
-/**
- * The seam between the UI and whatever produces location data.
- *
- * The UI only ever talks to this interface, so replacing the mock with a real
- * GPS/websocket backend means providing a different implementation and passing
- * it to <AgentLocationsProvider service={...}> — no component changes.
- */
 export interface LocationService {
-  /** One-shot fetch of the current snapshot. */
   listLocations(): Promise<AgentLocation[]>;
-  /**
-   * Push updates. Returns an unsubscribe function.
-   * A real implementation would open a websocket or SSE stream here and call
-   * `onUpdate` on every inbound fix.
-   */
+  getLocation?(agentId: string): Promise<AgentLocation | null>;
+  getHistory?(
+    agentId: string,
+    params?: { limit?: number },
+  ): Promise<AgentLocationHistoryPoint[]>;
   subscribe(onUpdate: (locations: AgentLocation[]) => void): () => void;
 }

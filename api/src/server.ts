@@ -1,6 +1,8 @@
+import { createServer } from "node:http";
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
+import { initRealtime } from "./lib/realtime.js";
 
 async function bootstrap() {
   try {
@@ -12,8 +14,10 @@ async function bootstrap() {
   }
 
   const app = createApp();
+  const server = createServer(app);
+  initRealtime(server);
 
-  app.listen(env.PORT, () => {
+  server.listen(env.PORT, () => {
     console.log(
       `Agrivet API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`,
     );

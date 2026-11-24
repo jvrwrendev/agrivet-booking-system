@@ -15,6 +15,7 @@ import { inventoryModule } from "./modules/inventory/inventory.module.js";
 import { bookingsModule } from "./modules/bookings/bookings.module.js";
 import { branchOrdersModule } from "./modules/branch-orders/branch-orders.module.js";
 import { reportsModule } from "./modules/reports/reports.module.js";
+import { agentLocationsModule } from "./modules/agent-locations/agent-locations.module.js";
 import { registerModules } from "./app.module.js";
 import { authenticateUnlessPublic } from "./middleware/auth.middleware.js";
 import {
@@ -103,6 +104,7 @@ export function createApp(): Express {
     bookingsModule,
     branchOrdersModule,
     reportsModule,
+    agentLocationsModule,
   ]);
 
   app.use(notFoundHandler);

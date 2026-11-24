@@ -13,7 +13,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ph.agrivet.mobile"
+      "bundleIdentifier": "ph.agrivet.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Agrivet uses your location to show your current position to authorized administrators during active work sessions.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Agrivet uses your location in the background to keep your assigned administrators updated during active delivery or field work.",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +26,14 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "ph.agrivet.mobile",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -34,6 +46,15 @@
           "photosPermission": "Agrivet needs access to your photos so you can set a profile picture."
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Agrivet to use your location during active work sessions so administrators can monitor field activity.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      "expo-task-manager",
       "expo-status-bar"
     ],
     "experiments": {

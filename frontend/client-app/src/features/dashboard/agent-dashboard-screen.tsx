@@ -15,6 +15,7 @@ import { LoadingState } from "@/components/shared/loading-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ModuleHeader } from "@/components/shared/module-header";
+import { LocationTrackingIndicator } from "@/components/shared/location-tracking-indicator";
 import {
   NotificationBell,
   type NotificationItem,
@@ -207,8 +208,11 @@ export function AgentDashboardScreen() {
                   onPressItem={onPressNotification}
                 />
               }
-              className="mb-5"
+              className="mb-2"
             />
+            <View className="mb-5">
+              <LocationTrackingIndicator />
+            </View>
 
             <View className="flex-row flex-wrap gap-3">
               {statCards.map((stat) => (

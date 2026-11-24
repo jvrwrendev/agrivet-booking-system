@@ -16,9 +16,10 @@ import type { AgentLocation, LocationStatusFilter } from "../types";
 
 const FILTERS: { value: LocationStatusFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "tracking", label: "Tracking" },
+  { value: "online", label: "Online" },
+  { value: "inactive", label: "Inactive" },
   { value: "offline", label: "Offline" },
-  { value: "location_unavailable", label: "No fix" },
+  { value: "gps_unavailable", label: "GPS Unavailable" },
 ];
 
 interface AgentLocationPanelProps {
@@ -56,7 +57,7 @@ export function AgentLocationPanel({
       if (!needle) return true;
       return (
         location.agentName.toLowerCase().includes(needle) ||
-        location.locationLabel.toLowerCase().includes(needle) ||
+        (location.locationLabel ?? "").toLowerCase().includes(needle) ||
         location.agentId.toLowerCase().includes(needle)
       );
     });
@@ -159,13 +160,13 @@ export function AgentLocationPanel({
                 {selected.latitude !== null && selected.longitude !== null ? (
                   <>
                     <span className="tabular-nums">
-                      {selected.latitude.toFixed(5)},{" "}
-                      {selected.longitude.toFixed(5)}
+                      {selected.latitude.toFixed(5)}, {selected.longitude.toFixed(5)}
                     </span>
                     {" · "}
                   </>
                 ) : null}
-                Updated {relativeTime(selected.lastUpdated)}
+                {selected.lastUpdated ? `Updated ${relativeTime(selected.lastUpdated)}` : "No updates yet"}
+                {selected.latitude !== null ? (selected.isLive ? " · Live" : " · Last known") : ""}
               </p>
             </div>
             <Button

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -74,7 +74,7 @@ interface DataTableProps<T> {
   onRetry?: () => void;
   pageSize?: number;
   rowKey: (row: T) => string;
-  onRowClick?: (row: T) => void;
+  onRowClick?: (row: T, event: MouseEvent<HTMLTableRowElement>) => void;
   globalActions?: ReactNode;
   showSearch?: boolean;
   serverMode?: DataTableServerMode;
@@ -330,8 +330,21 @@ export function DataTable<T>({
                   paginated.map((row) => (
                     <TableRow
                       key={rowKey(row)}
-                      onClick={() => onRowClick?.(row)}
-                      className={cn(onRowClick && "cursor-pointer")}
+                      onClick={(event) => {
+                        if (!onRowClick) return;
+                        const target = event.target as HTMLElement | null;
+                        if (
+                          target?.closest(
+                            'a, button, input, select, textarea, [role="button"], [role="menuitem"], [role="link"], [data-row-click-ignore="true"]'
+                          )
+                        ) {
+                          return;
+                        }
+                        onRowClick(row, event);
+                      }}
+                      className={cn(
+                        onRowClick && "cursor-pointer hover:bg-muted/50"
+                      )}
                     >
                       {columns.map((col) => (
                         <TableCell

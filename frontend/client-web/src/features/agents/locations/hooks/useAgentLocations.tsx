@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { mockLocationService } from "../services/mockLocationService";
+import { agentLocationService } from "../services/agentLocationService";
 import type { AgentLocation, LocationService } from "../types";
 
 interface AgentLocationsContextValue {
@@ -35,7 +35,7 @@ const AgentLocationsContext =
  */
 export function AgentLocationsProvider({
   children,
-  service = mockLocationService,
+  service = agentLocationService,
 }: {
   children: ReactNode;
   service?: LocationService;

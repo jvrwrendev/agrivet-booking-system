@@ -2,14 +2,8 @@ import { cn } from "@/lib/utils";
 import { LOCATION_STATUS_META } from "./LocationStatusBadge";
 import type { LocationStatus } from "../types";
 
-const ORDER: LocationStatus[] = ["tracking", "offline", "location_unavailable"];
+const ORDER: LocationStatus[] = ["online", "inactive", "offline", "gps_unavailable"];
 
-/**
- * Map overlay legend.
- *
- * The list panel also communicates status, but the map is often looked at on
- * its own — the legend keeps the colours self-explanatory there.
- */
 export function MapLegend({ className }: { className?: string }) {
   return (
     <div

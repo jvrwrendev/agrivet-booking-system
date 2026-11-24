@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CalendarRange, Eye, Filter, ShoppingCart, Store, User } from "lucide-react";
 import { endOfMonth, endOfWeek, endOfYear, format, startOfMonth, startOfWeek, startOfYear } from "date-fns";
 
@@ -67,6 +67,7 @@ function withinPreset(dateStr: string, preset: DatePreset): boolean {
 }
 
 export function OrdersPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isSuperAdmin } = usePermissions();
   const { bookings } = useBookingsStore();
@@ -339,6 +340,7 @@ export function OrdersPage() {
             searchPlaceholder="Search by order no., customer, agent..."
             searchKeys={["reference", "customerName", "agentName"]}
             rowKey={(b) => b.id}
+            onRowClick={(b) => navigate(`/orders/agent/${b.id}`)}
             toolbar={
               <>
                 <Filter className="hidden h-4 w-4 text-muted-foreground sm:block" />
@@ -399,6 +401,7 @@ export function OrdersPage() {
             searchPlaceholder="Search by order no., branch..."
             searchKeys={["reference", "branchName", "branchManager"]}
             rowKey={(o) => o.id}
+            onRowClick={(o) => navigate(`/orders/branch/${o.id}`)}
             loading={branchOrdersLoading}
             error={branchOrdersError}
             onRetry={() => void refreshBranchOrders()}
