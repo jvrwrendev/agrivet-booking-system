@@ -4,6 +4,7 @@ import { sendSuccess } from "../../lib/api-response.js";
 import { env } from "../../config/env.js";
 import { AUTH_COOKIE_NAME } from "../../constants.js";
 import { sessionTtlMs, verifyAccessToken } from "../../lib/jwt.js";
+import { extractAccessToken } from "../../middleware/auth.middleware.js";
 import type { AuthenticatedRequest } from "./auth.types.js";
 import {
   changePasswordDto,
@@ -48,7 +49,26 @@ export const loginController = asyncHandler(async (req: Request, res) => {
     maxAge: sessionTtlMs(),
   });
 
-  return sendSuccess(res, { user, session });
+  // The httpOnly cookie is the primary credential. The signed token is also
+  // returned in the body so clients that cannot store the cookie can fall back
+  // to sending it as `Authorization: Bearer`. It is the same JWT — no extra
+  // privileges, and every request is still validated against the DB session.
+  return sendSuccess(res, { user, session, accessToken });
+});
+
+/**
+ * Lightweight, always-200 credential probe. Lets the client detect "no
+ * session" on cold load without producing a browser-network 401 log. It only
+ * reports whether a credential is present — the real validation still happens
+ * on `/auth/me` and every protected endpoint.
+ */
+export const authStatusController = asyncHandler(async (req: Request, res) => {
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME];
+  const authHeader = req.headers.authorization;
+  const hasCredentials =
+    (typeof cookieToken === "string" && cookieToken.length > 0) ||
+    (typeof authHeader === "string" && /^Bearer\s+\S/i.test(authHeader));
+  return sendSuccess(res, { hasCredentials });
 });
 
 export const registerController = asyncHandler(async (req: Request, res) => {
@@ -88,7 +108,7 @@ export const updateProfileController = asyncHandler(
 );
 
 export const logoutController = asyncHandler(async (req, res) => {
-  const token = req.cookies?.[AUTH_COOKIE_NAME];
+  const token = extractAccessToken(req);
 
   if (typeof token === "string" && token.length > 0) {
     try {

@@ -57,7 +57,12 @@ export function initRealtime(server: HttpServer) {
   io.use(async (socket, next) => {
     try {
       const cookies = parseCookies(socket.handshake.headers.cookie);
-      const token = cookies[AUTH_COOKIE_NAME];
+      const authToken = socket.handshake.auth?.token;
+      const token =
+        cookies[AUTH_COOKIE_NAME] ??
+        (typeof authToken === "string" && authToken.length > 0
+          ? authToken
+          : undefined);
       if (!token) return next(new Error("Unauthorized"));
       const payload = verifyAccessToken(token);
       if (typeof payload.sid !== "string") return next(new Error("Unauthorized"));

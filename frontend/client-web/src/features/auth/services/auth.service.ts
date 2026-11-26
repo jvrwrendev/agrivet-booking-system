@@ -27,6 +27,11 @@ export function logout(): Promise<{ message: string }> {
   return request<{ message: string }>("/auth/logout", { method: "POST" });
 }
 
+/** `GET /api/v1/auth/status` — always 200; tells us if a credential exists. */
+export function getAuthStatus(): Promise<{ hasCredentials: boolean }> {
+  return request<{ hasCredentials: boolean }>("/auth/status");
+}
+
 /** `GET /api/v1/auth/me` — re-reads the user from the database on every call. */
 export function getCurrentUser(): Promise<{ user: PublicUserDto }> {
   return request<{ user: PublicUserDto }>("/auth/me");

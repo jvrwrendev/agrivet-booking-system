@@ -1,5 +1,6 @@
 import { Navigate, useLocation, Link } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Permission } from "@/lib/permissions";
@@ -13,8 +14,18 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+  const [timedOut, setTimedOut] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading) {
+      setTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setTimedOut(true), 5000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && !timedOut) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
@@ -22,7 +33,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || timedOut) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

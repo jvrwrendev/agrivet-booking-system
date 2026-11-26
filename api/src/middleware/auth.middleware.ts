@@ -1,4 +1,4 @@
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 import { asyncHandler } from "../lib/async-handler.js";
 import { AppError, Errors } from "../lib/app-error.js";
 import { verifyAccessToken } from "../lib/jwt.js";
@@ -11,11 +11,32 @@ import type {
   SessionMeta,
 } from "../modules/auth/auth.types.js";
 
+/**
+ * Credentials are accepted from either the httpOnly session cookie (primary)
+ * or an `Authorization: Bearer` header (fallback for clients where the cookie
+ * cannot be stored/sent, e.g. blocked third-party cookies). Both paths carry
+ * the exact same signed JWT and go through identical session validation below.
+ */
+export function extractAccessToken(req: Request): string | undefined {
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME];
+  if (typeof cookieToken === "string" && cookieToken.length > 0) {
+    return cookieToken;
+  }
+
+  const header = req.headers.authorization;
+  if (typeof header === "string" && /^Bearer\s+/i.test(header)) {
+    const bearer = header.replace(/^Bearer\s+/i, "").trim();
+    if (bearer.length > 0) return bearer;
+  }
+
+  return undefined;
+}
+
 export const authenticate: RequestHandler = asyncHandler(
   async (req, _res, next) => {
-    const token = req.cookies?.[AUTH_COOKIE_NAME];
+    const token = extractAccessToken(req);
 
-    if (typeof token !== "string" || token.length === 0) {
+    if (!token) {
       throw Errors.unauthorized("Not authenticated");
     }
 
@@ -75,6 +96,7 @@ export const authenticate: RequestHandler = asyncHandler(
 
 const PUBLIC_PATHS = [
   "/health",
+  "/api/v1/auth/status",
   "/api/v1/auth/register",
   "/api/v1/auth/login",
   "/api/v1/auth/logout",

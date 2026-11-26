@@ -1,4 +1,4 @@
-import { ApiError, request } from "@/lib/api-client";
+import { ApiError, isSessionInvalid, notifyUnauthorized, request, waitForSessionCheck } from "@/lib/api-client";
 import type {
   ReportExportFormat,
   ReportSection,
@@ -63,10 +63,19 @@ export async function downloadReport(
   query.set("format", format);
   query.set("report", report);
 
+  await waitForSessionCheck();
+  if (isSessionInvalid()) {
+    throw new ApiError(401, "SESSION_EXPIRED", "Your session has expired. Please sign in again.");
+  }
+
   const response = await fetch(
     `${API_BASE}/reports/export?${query.toString()}`,
     { credentials: "include" },
   );
+
+  if (response.status === 401) {
+    notifyUnauthorized();
+  }
 
   if (!response.ok) {
     let message = `Export failed (HTTP ${response.status})`;
@@ -80,7 +89,7 @@ export async function downloadReport(
     }
     throw new ApiError(
       response.status,
-      "REPORT_EXPORT_FAILED",
+      response.status === 401 ? "SESSION_EXPIRED" : "REPORT_EXPORT_FAILED",
       message,
     );
   }

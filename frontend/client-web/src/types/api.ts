@@ -82,6 +82,8 @@ export interface ListUsersResponseDto {
 export interface LoginResponseDto {
   user: PublicUserDto;
   session: SessionDto;
+  /** Signed session JWT — fallback credential when the httpOnly cookie is unavailable. */
+  accessToken?: string;
 }
 
 export interface CreateUserPayloadDto {

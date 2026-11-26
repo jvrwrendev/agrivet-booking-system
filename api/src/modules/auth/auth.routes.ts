@@ -2,6 +2,7 @@ import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import { sessionsRouter } from "./sessions.routes.js";
 import {
+  authStatusController,
   changePasswordController,
   getMeController,
   loginController,
@@ -71,6 +72,8 @@ const resendVerificationRateLimiter = rateLimit({
 });
 
 export const authRouter = Router();
+
+authRouter.get("/status", authStatusController);
 
 authRouter.post("/register", registerRateLimiter, registerController);
 

@@ -1,5 +1,5 @@
 import { io, type Socket } from "socket.io-client";
-import { request } from "@/lib/api-client";
+import { getBearerToken, request } from "@/lib/api-client";
 import type { AgentLocation, AgentLocationHistoryPoint, LocationService } from "../types";
 
 interface LocationsResponse {
@@ -42,6 +42,7 @@ export function createAgentLocationService(): LocationService {
     socket = io("/", {
       path: "/socket.io",
       withCredentials: true,
+      auth: { token: getBearerToken() },
       transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 10,
